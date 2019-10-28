@@ -11,16 +11,73 @@ using UnityEngine;
 
 public class Pathmaker : MonoBehaviour {
 
-// STEP 2: ============================================================================================
-// translate the pseudocode below
+    // STEP 2: ============================================================================================
+    // translate the pseudocode below
 
-//	DECLARE CLASS MEMBER VARIABLES:
-//	Declare a private integer called counter that starts at 0; 		// counter var will track how many floor tiles I've instantiated
-//	Declare a public Transform called floorPrefab, assign the prefab in inspector;
-//	Declare a public Transform called pathmakerSpherePrefab, assign the prefab in inspector; 		// you'll have to make a "pathmakerSphere" prefab later
+    //	DECLARE CLASS MEMBER VARIABLES:
+    //	Declare a private integer called counter that starts at 0; 		// counter var will track how many floor tiles I've instantiated
+    //	Declare a public Transform called floorPrefab, assign the prefab in inspector;
+    //	Declare a public Transform called pathmakerSpherePrefab, assign the prefab in inspector; 		// you'll have to make a "pathmakerSphere" prefab later
+    public static int globalTileCount;
+    public int maxTile;
+    public float upperRange; // This var determines how frequent it will make long hallway. (how much larger than 1)
+    public int lifeTime; // After this many round Pathmaker will die
+    public Transform floorPrefab, pathmakerSpherePrefab;
+    public GameObject[] floorSpawned;
+    public GameObject[] floorVariant;
+    public Vector3 centerPos;
+    public Camera mainCam;
 
+    void Start()
+    {
+        upperRange = Random.Range(1.25f, 1.5f);
+        lifeTime = Random.Range(15, 40);
+    }
 
-	void Update () {
+    void Update() {
+        floorPrefab = floorVariant[Random.Range(0, 3)].transform;
+        if (Pathmaker.globalTileCount <= maxTile)
+        {
+            float randomthingy = Random.Range(0f, upperRange);
+            if (randomthingy < 0.25f)
+            {
+                transform.Rotate(new Vector3(0, 90, 0));
+            } else if (randomthingy > 0.25f && randomthingy < 0.5f)
+            {
+                transform.Rotate(new Vector3(0, -90, 0));
+            } else if (randomthingy > 0.99f && randomthingy < 1.0f)
+            {
+                Instantiate(pathmakerSpherePrefab);
+            }
+            Instantiate(floorPrefab, new Vector3(gameObject.transform.position.x,
+                                                 gameObject.transform.position.y,
+                                                 gameObject.transform.position.z), Quaternion.identity);
+            transform.Translate(5f, 0, 0);
+            Pathmaker.globalTileCount++;
+        }
+        else if(Pathmaker.globalTileCount > lifeTime)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+        CameraMove();
+    }
+
+    void CameraMove()
+    {
+        floorSpawned = GameObject.FindGameObjectsWithTag("Floor");
+        for (int i = 0; i < floorSpawned.Length; i++)
+        {
+            centerPos += floorSpawned[i].transform.position;
+        }
+        centerPos = centerPos / floorSpawned.Length;
+        if(floorSpawned.Length < 350)
+        mainCam.transform.position = centerPos + new Vector3(0, floorSpawned.Length + 5f, 0);
+    }
+
 //		If counter is less than 50, then:
 //			Generate a random number from 0.0f to 1.0f;
 //			If random number is less than 0.25f, then rotate myself 90 degrees;
@@ -33,7 +90,6 @@ public class Pathmaker : MonoBehaviour {
 //			Increment counter;
 //		Else:
 //			Destroy my game object; 		// self destruct if I've made enough tiles already
-	}
 
 } // end of class scope
 
@@ -60,7 +116,7 @@ public class Pathmaker : MonoBehaviour {
 // a. how long should a pathmaker live? etc.
 // b. how would you tune the probabilities to generate lots of long hallways? does it work?
 // c. tweak all the probabilities that you want... what % chance is there for a pathmaker to make a pathmaker? is that too high or too low?
-
+// 1% Initially but it grow exponentially afterwards.
 
 
 // STEP 5: ===================================================================================
@@ -87,7 +143,7 @@ public class Pathmaker : MonoBehaviour {
 
 // DYNAMIC CAMERA:
 // position the camera to center itself based on your generated world...
-// 1. keep a list of all your spawned tiles
+// 1. keep a list of all your spawned tiles 
 // 2. then calculate the average position of all of them (use a for() loop to go through the whole list) 
 // 3. then move your camera to that averaged center and make sure fieldOfView is wide enough?
 
